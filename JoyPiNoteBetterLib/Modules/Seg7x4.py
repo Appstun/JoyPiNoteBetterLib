@@ -1,6 +1,10 @@
 from typing import Union
 
-from adafruit_ht16k33.segments import Seg7x4 as AdafruitSeg7x4
+# Import Seg7x4 from adafruit with fallback for JoyPiNote environment
+try:
+    from adafruit_ht16k33.segments import Seg7x4 as AdafruitSeg7x4
+except ImportError:
+    from JoypiNote_adafruit_ht16k33.segments import Seg7x4 as AdafruitSeg7x4
 
 # Import shared I2C bus
 from ..Shared.SharedI2C import getSharedI2C, releaseSharedI2C
