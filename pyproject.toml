@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "JoyPiNoteBetterLib"
+version = "1.0.34"
+description = "Library for use of all the JoyPi Note hardware components on Raspberry Pi"
+authors = [{ name = "Appstun" }]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+    "Adafruit-Blinka",
+    "adafruit-circuitpython-charlcd",
+    "adafruit-circuitpython-ht16k33",
+    "adafruit-circuitpython-ahtx0",
+    "mfrc522",
+    "RPi.GPIO",
+    "rpi_ws281x",
+    "smbus2",
+    "spidev",
+]
+
+[project.urls]
+Homepage = "https://github.com/Appstun/JoyPiNoteBetterLib"
+
+[tool.setuptools.packages.find]
+include = ["JoyPiNoteBetterLib*"]
