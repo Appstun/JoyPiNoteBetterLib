@@ -28,17 +28,13 @@ class TouchSensor:
     def waitForTouch(self, interval: float = 0.05) -> None:
         """Block until the sensor detects a touch.
 
-        Polls the sensor at the specified interval until a touch is detected
-        or the operation is interrupted by KeyboardInterrupt.
+        Polls the sensor at the specified interval until a touch is detected.
 
         Args:
             interval: Polling interval in seconds (default 0.05).
         """
-        try:
-            while not GPIO.input(self.pin):
-                time.sleep(interval)
-        except KeyboardInterrupt:
-            pass
+        while not GPIO.input(self.pin):
+            time.sleep(interval)
 
     def isTouched(self) -> bool:
         """Check if the sensor is currently being touched.
