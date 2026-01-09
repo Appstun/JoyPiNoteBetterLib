@@ -20,7 +20,7 @@ pip install . # install in existing virtual environment
 
 
 ## Modules supported
-See [modules.md](Modules.md) for full documentation.
+See [Modules.md](Modules.md) for full documentation.
 
 | Module       | Description               |
 | ------------ | ------------------------- |
