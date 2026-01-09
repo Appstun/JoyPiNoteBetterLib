@@ -8,8 +8,9 @@ feedback where possible.
 Usage:
     python testAll.py [component]
 
-    Components: all, led, lcd, seg7, button, joystick, touch, tilt, buzzer, vibrator,
-                humtemp, sound, light, ultrasonic, nfc, servo, stepmotor, clear, shared, imports
+    Components: all, led, lcd, scrollinglcd, seg7, button, joystick, touch, tilt,
+                buzzer, pwmbuzzer, vibrator, pwmvibrator, humtemp, sound, light,
+                ultrasonic, nfc, servo, stepmotor, relay, clear, shared, imports
     Default: all
 """
 
@@ -211,7 +212,24 @@ def testImports() -> bool:
         printTest("Import ModuleReset", False, str(e))
         allPassed = False
 
+    try:
+        from JoyPiNoteBetterLib import Relay
+
+        printTest("Import Relay", True)
+    except ImportError as e:
+        printTest("Import Relay", False, str(e))
+        allPassed = False
+
+    try:
+        from JoyPiNoteBetterLib import ScrollingLinesLcd
+
+        printTest("Import ScrollingLinesLcd", True)
+    except ImportError as e:
+        printTest("Import ScrollingLinesLcd", False, str(e))
+        allPassed = False
+
     return allPassed
+
 
 def testRelay() -> None:
     """Test Relay component."""
@@ -226,6 +244,7 @@ def testRelay() -> None:
 
         try:
             relay.turnOn()
+            time.sleep(0.2)
             printTest("turnOn", True)
         except Exception as e:
             printTest("turnOn", False, str(e))
@@ -238,6 +257,69 @@ def testRelay() -> None:
 
     except Exception as e:
         printTest("Relay initialization", False, str(e))
+
+
+def testScrollingLinesLcd() -> None:
+    """Test ScrollingLinesLcd component."""
+    printHeader("Testing ScrollingLinesLcd")
+
+    try:
+        from JoyPiNoteBetterLib import LcdDisplay, ScrollingLinesLcd
+
+        # Test instantiation with existing LcdDisplay
+        lcd = LcdDisplay(cols=16, rows=2)
+        scroller = ScrollingLinesLcd(lcdDisplay=lcd)
+        printTest("ScrollingLinesLcd instantiation (with LCD)", True)
+
+        # Test instantiation without LcdDisplay (creates its own)
+        try:
+            scroller2 = ScrollingLinesLcd()
+            printTest("ScrollingLinesLcd instantiation (auto LCD)", True)
+            scroller2.stop()
+        except Exception as e:
+            printTest("ScrollingLinesLcd instantiation (auto LCD)", False, str(e))
+
+        # Test show method
+        try:
+            scroller.show(["Hello", "World", "Test"], line=0, delay=0.5)
+            printTest("show (line 0)", True)
+        except Exception as e:
+            printTest("show (line 0)", False, str(e))
+
+        # Test show on second line
+        try:
+            scroller.show(["Line2A", "Line2B"], line=1)
+            printTest("show (line 1)", True)
+        except Exception as e:
+            printTest("show (line 1)", False, str(e))
+
+        # Let it scroll for a bit
+        time.sleep(1.5)
+
+        # Test stop method
+        try:
+            scroller.stop(clearMessages=True)
+            printTest("stop (with clear)", True)
+        except Exception as e:
+            printTest("stop (with clear)", False, str(e))
+
+        # Test start method
+        try:
+            scroller.lineMessages["0"] = ["Restart", "Test"]
+            scroller.start()
+            time.sleep(0.5)
+            scroller.stop()
+            printTest("start", True)
+        except Exception as e:
+            printTest("start", False, str(e))
+
+        # Clean up
+        lcd.clear()
+        lcd.displayMessage("Scroller done!", line=0)
+
+    except Exception as e:
+        printTest("ScrollingLinesLcd initialization", False, str(e))
+
 
 def testLedMatrix() -> None:
     """Test LedMatrix component."""
@@ -1485,6 +1567,7 @@ def main() -> int:
         "all",
         "led",
         "lcd",
+        "scrollinglcd",
         "seg7",
         "button",
         "joystick",
@@ -1501,6 +1584,7 @@ def main() -> int:
         "nfc",
         "servo",
         "stepmotor",
+        "relay",
         "clear",
         "shared",
         "imports",
@@ -1525,6 +1609,9 @@ def main() -> int:
 
     if component in ("all", "lcd"):
         testLcdDisplay()
+
+    if component in ("all", "scrollinglcd"):
+        testScrollingLinesLcd()
 
     if component in ("all", "seg7"):
         testSeg7x4()
@@ -1570,6 +1657,9 @@ def main() -> int:
 
     if component in ("all", "stepmotor"):
         testStepmotor()
+
+    if component in ("all", "relay"):
+        testRelay()
 
     # NFC test last - SimpleMFRC522 can interfere with GPIO state
     if component in ("all", "nfc"):
