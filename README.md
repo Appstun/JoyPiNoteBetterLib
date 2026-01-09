@@ -19,7 +19,6 @@ pip install . # install in existing virtual environment
 ```
 
 
-
 ## Modules supported
 See [modules.md](Modules.md) for full documentation.
 
@@ -50,3 +49,25 @@ See [modules.md](Modules.md) for full documentation.
 > ```bash
 > sudo python3 your_script.py
 > ```
+
+## Reinstallation
+
+If you want to update first, from the repository root run:
+```bash
+# Get latest changes
+git pull
+```
+
+
+If you need to reinstall the library, from the repository root run:
+```bash
+# reinstall in virtual environment:
+pip uninstall JoyPiNoteBetterLib
+rm -rf JoyPiNoteBetterLib.egg-info
+pip install . --break-system-packages
+# OR
+# reinstall globally:
+sudo pip uninstall JoyPiNoteBetterLib --break-system-packages
+sudo rm -rf JoyPiNoteBetterLib.egg-info
+sudo pip install . --break-system-packages
+```
