@@ -16,7 +16,7 @@ from .Modules.ButtonMatrix import ButtonMatrix
 from .Modules.Buzzer import Buzzer, PwmBuzzer
 from .Modules.HumTemp import HumidityTemperatureSensor
 from .Modules.Joystick import Direction, Joystick
-from .Modules.LcdDisplay import LcdDisplay
+from .Modules.LcdDisplay import LcdDisplay, ScrollingLinesLcd
 from .Modules.LedMatrix import LedMatrix
 from .Modules.LightSensor import LightSensor
 from .Modules.Nfc import NfcReader
@@ -53,7 +53,8 @@ __all__ = [
     "Stepmotor",
     "ModuleReset",
     "Relay",
+    "ScrollingLinesLcd",
 ]
 
-__version__ = "1.0.34"
+__version__ = "1.1.0"
 __package_name__ = "JoyPiNoteBetterLib"

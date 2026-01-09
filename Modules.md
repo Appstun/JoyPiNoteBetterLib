@@ -37,10 +37,10 @@ matrix = ButtonMatrix()
 
 ### Available Methods
 
-| Method | Description | Returns |
-|--------|-------------|---------|
+| Method            | Description                          | Returns                |
+| ----------------- | ------------------------------------ | ---------------------- |
 | `getPressedKey()` | Returns the currently pressed button | `int` (0-15) or `None` |
-| `getAdcValue()` | Reads the raw ADC value | `int` (0-1023) |
+| `getAdcValue()`   | Reads the raw ADC value              | `int` (0-1023)         |
 
 ### Example
 ```python
@@ -72,19 +72,19 @@ pwm_buzzer = PwmBuzzer()
 ### Available Methods
 
 **Simple Buzzer:**
-| Method | Description |
-|--------|-------------|
-| `buzz(duration=1.0)` | Beeps for the specified time (in seconds) |
-| `setBuzz(True/False)` | Turns the buzzer on or off |
-| `stop()` | Turns the buzzer off |
+| Method                | Description                               |
+| --------------------- | ----------------------------------------- |
+| `buzz(duration=1.0)`  | Beeps for the specified time (in seconds) |
+| `setBuzz(True/False)` | Turns the buzzer on or off                |
+| `stop()`              | Turns the buzzer off                      |
 
 **PWM Buzzer:**
-| Method | Description |
-|--------|-------------|
-| `setFrequency(frequency)` | Changes the pitch (in Hz) |
+| Method                     | Description                |
+| -------------------------- | -------------------------- |
+| `setFrequency(frequency)`  | Changes the pitch (in Hz)  |
 | `setDutyCycle(duty_cycle)` | Changes the volume (0-100) |
-| `buzz(duty_cycle=50)` | Starts the tone |
-| `stop()` | Stops the tone |
+| `buzz(duty_cycle=50)`      | Starts the tone            |
+| `stop()`                   | Stops the tone             |
 
 ### Example
 ```python
@@ -114,10 +114,10 @@ sensor = HumidityTemperatureSensor()
 
 ### Available Methods
 
-| Method | Description | Returns |
-|--------|-------------|---------|
+| Method             | Description         | Returns         |
+| ------------------ | ------------------- | --------------- |
 | `getTemperature()` | Current temperature | `float` (in °C) |
-| `getHumidity()` | Current humidity | `float` (in %) |
+| `getHumidity()`    | Current humidity    | `float` (in %)  |
 
 ### Example
 ```python
@@ -145,13 +145,13 @@ joystick = Joystick()
 
 ### Available Methods
 
-| Method | Description | Returns |
-|--------|-------------|---------|
-| `getX()` | X-axis position (left/right) | `int` (0-1023, center ~512) |
-| `getY()` | Y-axis position (up/down) | `int` (0-1023, center ~512) |
-| `getXY()` | Both values as tuple | `(x, y)` |
-| `getDirection(threshold=200)` | Direction as enum | `Direction` |
-| `getDirection8(threshold=200)` | 8 directions (incl. diagonal) | `Direction` |
+| Method                         | Description                   | Returns                     |
+| ------------------------------ | ----------------------------- | --------------------------- |
+| `getX()`                       | X-axis position (left/right)  | `int` (0-1023, center ~512) |
+| `getY()`                       | Y-axis position (up/down)     | `int` (0-1023, center ~512) |
+| `getXY()`                      | Both values as tuple          | `(x, y)`                    |
+| `getDirection(threshold=200)`  | Direction as enum             | `Direction`                 |
+| `getDirection8(threshold=200)` | 8 directions (incl. diagonal) | `Direction`                 |
 
 ### Directions (Direction Enum)
 - `Direction.CENTER` - Center
@@ -186,22 +186,35 @@ A 16x2 character LCD display for showing text.
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.LcdDisplay import LcdDisplay
+from JoyPiNoteBetterLib.Modules.LcdDisplay import LcdDisplay, ScrollingLinesLcd
 
 lcd = LcdDisplay()
+
+# For auto-scrolling multiple messages per line
+scroller = ScrollingLinesLcd()
+# Or with existing LCD instance
+scroller = ScrollingLinesLcd(lcdDisplay=lcd)
 ```
 
 ### Available Methods
 
-| Method | Description |
-|--------|-------------|
-| `clear()` | Clears the entire screen |
-| `displayMessage(text, line=0)` | Shows text on a line |
-| `setBacklight(True/False)` | Backlight on/off |
-| `setCursor(True/False)` | Show/hide cursor |
-| `setBlink(True/False)` | Cursor blinking on/off |
-| `setCursorPosition(col, row)` | Set cursor position |
+**LcdDisplay:**
+| Method                         | Description                |
+| ------------------------------ | -------------------------- |
+| `clear()`                      | Clears the entire screen   |
+| `displayMessage(text, line=0)` | Shows text on a line       |
+| `setBacklight(True/False)`     | Backlight on/off           |
+| `setCursor(True/False)`        | Show/hide cursor           |
+| `setBlink(True/False)`         | Cursor blinking on/off     |
+| `setCursorPosition(col, row)`  | Set cursor position        |
 | `showBigText(text, delay=0.3)` | Long text with auto-scroll |
+
+**ScrollingLinesLcd:**
+| Method                             | Description                                 |
+| ---------------------------------- | ------------------------------------------- |
+| `show(messages, line, delay=None)` | Set messages for a line and start scrolling |
+| `start()`                          | Start the scrolling animation               |
+| `stop(clearMessages=True)`         | Stop the scrolling animation                |
 
 ### Example
 ```python
@@ -213,6 +226,15 @@ lcd.displayMessage("World", 1)      # Line 2
 
 # Auto-scroll long text
 lcd.showBigText("This is a very long text that scrolls automatically")
+
+# Scrolling multiple messages per line
+scroller = ScrollingLinesLcd(lcd)
+scroller.show(["Message 1", "Message 2", "Message 3"], line=0, delay=1.0)
+scroller.show(["Line 2 A", "Line 2 B"], line=1)
+
+# Stop scrolling
+time.sleep(5)
+scroller.stop()
 ```
 
 ---
@@ -233,15 +255,15 @@ matrix = LedMatrix()
 
 ### Available Methods
 
-| Method | Description |
-|--------|-------------|
-| `clear()` | Turns off all LEDs |
-| `fill(color)` | Fills all LEDs with a color |
-| `setPixel(x, y, color)` | Sets a single pixel |
-| `setBrightness(value)` | Change brightness (0-255) |
-| `showChar(char, color)` | Shows a character |
-| `scrollText(text, color, delay)` | Scroll text across display |
-| `update()` | Apply changes to matrix |
+| Method                           | Description                 |
+| -------------------------------- | --------------------------- |
+| `clear()`                        | Turns off all LEDs          |
+| `fill(color)`                    | Fills all LEDs with a color |
+| `setPixel(x, y, color)`          | Sets a single pixel         |
+| `setBrightness(value)`           | Change brightness (0-255)   |
+| `showChar(char, color)`          | Shows a character           |
+| `scrollText(text, color, delay)` | Scroll text across display  |
+| `update()`                       | Apply changes to matrix     |
 
 ### Colors
 Colors are specified as RGB tuples: `(Red, Green, Blue)` with values 0-255.
@@ -283,8 +305,8 @@ sensor = LightSensor()
 
 ### Available Methods
 
-| Method | Description | Returns |
-|--------|-------------|---------|
+| Method        | Description                 | Returns          |
+| ------------- | --------------------------- | ---------------- |
 | `readLight()` | Measures current brightness | `float` (in Lux) |
 
 ### Example
@@ -315,11 +337,11 @@ nfc = NfcReader()
 
 ### Available Methods
 
-| Method | Description | Returns |
-|--------|-------------|---------|
-| `read()` | Reads data from a tag | `(id, text)` or `(None, None)` |
-| `write(text)` | Writes data to a tag | `(id, text)` or `(None, None)` |
-| `waitForTag()` | Waits until a tag is detected | `(id, text)` |
+| Method         | Description                   | Returns                        |
+| -------------- | ----------------------------- | ------------------------------ |
+| `read()`       | Reads data from a tag         | `(id, text)` or `(None, None)` |
+| `write(text)`  | Writes data to a tag          | `(id, text)` or `(None, None)` |
+| `waitForTag()` | Waits until a tag is detected | `(id, text)`                   |
 
 ### Example
 ```python
@@ -350,9 +372,9 @@ relay = Relay()
 
 ### Available Methods
 
-| Method | Description |
-|--------|-------------|
-| `turnOn()` | Turns the relay on |
+| Method      | Description         |
+| ----------- | ------------------- |
+| `turnOn()`  | Turns the relay on  |
 | `turnOff()` | Turns the relay off |
 
 ### Example
@@ -379,14 +401,14 @@ display = Seg7x4()
 
 ### Available Methods
 
-| Method | Description |
-|--------|-------------|
+| Method                      | Description                  |
+| --------------------------- | ---------------------------- |
 | `setFull(value, decimal=0)` | Shows number/text on display |
-| `set(position, value)` | Sets a single digit (0-3) |
-| `showColon()` | Shows the colon |
-| `clear()` | Clears the display |
-| `setBrightness(0.0-1.0)` | Set brightness |
-| `update()` | Apply changes |
+| `set(position, value)`      | Sets a single digit (0-3)    |
+| `showColon()`               | Shows the colon              |
+| `clear()`                   | Clears the display           |
+| `setBrightness(0.0-1.0)`    | Set brightness               |
+| `update()`                  | Apply changes                |
 
 ### Example
 ```python
@@ -421,10 +443,10 @@ servo = Servomotor()
 
 ### Available Methods
 
-| Method | Description |
-|--------|-------------|
+| Method                       | Description                    |
+| ---------------------------- | ------------------------------ |
 | `setDirection(angle, speed)` | Rotates to the specified angle |
-| `getDirection()` | Returns current angle |
+| `getDirection()`             | Returns current angle          |
 
 ### Parameters
 - `angle`: Target angle (0-180 degrees)
@@ -454,8 +476,8 @@ sensor = SoundSensor()
 
 ### Available Methods
 
-| Method | Description | Returns |
-|--------|-------------|---------|
+| Method              | Description                   | Returns      |
+| ------------------- | ----------------------------- | ------------ |
 | `isSoundDetected()` | Checks if a sound is detected | `True/False` |
 
 ### Example
@@ -483,12 +505,12 @@ motor = Stepmotor()
 
 ### Available Methods
 
-| Method | Description |
-|--------|-------------|
-| `setSpeed(1-100)` | Set speed |
-| `turnSteps(steps)` | Rotate by X steps (negative = reverse) |
-| `turnDegrees(degrees)` | Rotate by X degrees |
-| `turnDistance(cm, radius)` | Rotate for a distance (with wheel) |
+| Method                     | Description                            |
+| -------------------------- | -------------------------------------- |
+| `setSpeed(1-100)`          | Set speed                              |
+| `turnSteps(steps)`         | Rotate by X steps (negative = reverse) |
+| `turnDegrees(degrees)`     | Rotate by X degrees                    |
+| `turnDistance(cm, radius)` | Rotate for a distance (with wheel)     |
 
 ### Example
 ```python
@@ -515,8 +537,8 @@ sensor = TiltSensor()
 
 ### Available Methods
 
-| Method | Description | Returns |
-|--------|-------------|---------|
+| Method       | Description                   | Returns      |
+| ------------ | ----------------------------- | ------------ |
 | `isTilted()` | Checks if the board is tilted | `True/False` |
 
 ### Example
@@ -546,10 +568,10 @@ sensor = TouchSensor()
 
 ### Available Methods
 
-| Method | Description | Returns |
-|--------|-------------|---------|
-| `isTouched()` | Checks if the sensor is being touched | `True/False` |
-| `waitForTouch()` | Waits for a touch | - (blocks) |
+| Method           | Description                           | Returns      |
+| ---------------- | ------------------------------------- | ------------ |
+| `isTouched()`    | Checks if the sensor is being touched | `True/False` |
+| `waitForTouch()` | Waits for a touch                     | - (blocks)   |
 
 ### Example
 ```python
@@ -581,8 +603,8 @@ sensor = UltrasonicSensor()
 
 ### Available Methods
 
-| Method | Description | Returns |
-|--------|-------------|---------|
+| Method          | Description           | Returns                            |
+| --------------- | --------------------- | ---------------------------------- |
 | `getDistance()` | Measures the distance | `float` (in cm) or `-1` on timeout |
 
 ### Example
@@ -622,16 +644,16 @@ pwm_vibrator = PwmVibrator()
 ### Available Methods
 
 **Simple Vibrator:**
-| Method | Description |
-|--------|-------------|
-| `vibrate(duration=1.0)` | Vibrates for X seconds |
-| `setVibrate(True/False)` | Vibration on/off |
+| Method                   | Description            |
+| ------------------------ | ---------------------- |
+| `vibrate(duration=1.0)`  | Vibrates for X seconds |
+| `setVibrate(True/False)` | Vibration on/off       |
 
 **PWM Vibrator:**
-| Method | Description |
-|--------|-------------|
+| Method                | Description             |
+| --------------------- | ----------------------- |
 | `setIntensity(0-100)` | Set vibration intensity |
-| `stop()` | Stop vibration |
+| `stop()`              | Stop vibration          |
 
 ### Example
 ```python

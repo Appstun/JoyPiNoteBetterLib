@@ -1,7 +1,9 @@
+import threading
 import time
 from typing import List
 
 import adafruit_character_lcd.character_lcd_i2c as LCD
+
 from ..Shared.SharedI2C import getSharedI2C, releaseSharedI2C
 
 # Default I2C address for the LCD display
@@ -203,3 +205,96 @@ class LcdDisplay:
     def __del__(self):
         """Release shared I2C bus reference on object deletion."""
         releaseSharedI2C()
+
+
+class ScrollingLinesLcd:
+    """LCD display controller for scrolling messages on individual lines.
+
+    Allows setting multiple messages per line that cycle through automatically
+    in a background thread. Each line scrolls independently.
+
+    Attributes:
+        lcdDisplay: The underlying LcdDisplay instance.
+        stopEvent: Threading event to signal stop.
+        thread: Background thread for scrolling animation.
+        lineMessages: Dictionary mapping line numbers to message lists.
+        delay_s: Delay in seconds between message changes.
+    """
+
+    def __init__(self, lcdDisplay: LcdDisplay | None = None):
+        """Initialize the scrolling LCD controller.
+
+        Args:
+            lcdDisplay: Existing LcdDisplay instance to use, or None to create a new one.
+        """
+        self.lcdDisplay = lcdDisplay if lcdDisplay is not None else LcdDisplay()
+        self.stopEvent: threading.Event | None = None
+        self.thread = None
+        self.lineMessages: dict[str, list[str]] = {"0": [], "1": []}
+        self.delay_s = 1.0
+
+    def stop(self, clearMessages: bool = True) -> None:
+        """Stop the scrolling animation.
+
+        Args:
+            clearMessages: If True, clear all stored messages (default True).
+        """
+        if self.stopEvent is not None:
+            self.stopEvent.set()
+        if self.thread is not None and self.thread.is_alive():
+            self.thread.join(timeout=2)
+
+        if clearMessages:
+            self.lineMessages = {"0": [], "1": []}
+
+    def start(self) -> None:
+        """Start or restart the scrolling animation.
+
+        Stops any existing animation and starts a new background thread
+        that cycles through messages on each line.
+        """
+        self.stop(False)
+        self.stopEvent = threading.Event()
+        se = self.stopEvent
+
+        def worker():
+            index = {"0": 0, "1": 0}
+            while not se.is_set():
+                for i in range(2):
+                    lineKey = str(i)
+                    if (
+                        lineKey in self.lineMessages
+                        and len(self.lineMessages[lineKey]) > 0
+                    ):
+                        self.lcdDisplay.displayMessage(
+                            self.lineMessages[lineKey][index[lineKey]], i
+                        )
+
+                        index[lineKey] = (index[lineKey] + 1) % len(
+                            self.lineMessages[lineKey]
+                        )
+
+                for _ in range(int(self.delay_s * 10)):
+                    if se.is_set():
+                        break
+                    time.sleep(0.1)
+
+        self.thread = threading.Thread(target=worker, daemon=True)
+        self.thread.start()
+
+    def show(self, messages: list[str], line: int, delay: float | None = None) -> None:
+        """Set messages for a line and start scrolling.
+
+        Args:
+            messages: List of messages to cycle through.
+            line: Line number (0 or 1).
+            delay: Optional delay in seconds between messages.
+        """
+        self.lineMessages[str(line)] = messages
+        if delay is not None:
+            self.delay_s = delay
+        self.start()
+
+    def __del__(self):
+        """Stop scrolling on object deletion."""
+        self.stop()
