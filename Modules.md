@@ -30,7 +30,7 @@ A 4x4 keypad with 16 buttons (0-15).
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.ButtonMatrix import ButtonMatrix
+from JoyPiNoteBetterLib import ButtonMatrix
 
 matrix = ButtonMatrix()
 ```
@@ -60,7 +60,7 @@ A small speaker that can produce beeping sounds.
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.Buzzer import Buzzer, PwmBuzzer
+from JoyPiNoteBetterLib import Buzzer, PwmBuzzer
 
 # Simple buzzer (on/off only)
 buzzer = Buzzer()
@@ -107,7 +107,7 @@ A sensor that measures the current temperature and humidity.
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.HumTemp import HumidityTemperatureSensor
+from JoyPiNoteBetterLib import HumidityTemperatureSensor
 
 sensor = HumidityTemperatureSensor()
 ```
@@ -138,7 +138,7 @@ A control stick that can be moved in all directions.
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.Joystick import Joystick, Direction
+from JoyPiNoteBetterLib import Joystick, Direction
 
 joystick = Joystick()
 ```
@@ -186,7 +186,7 @@ A 16x2 character LCD display for showing text.
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.LcdDisplay import LcdDisplay, ScrollingLinesLcd
+from JoyPiNoteBetterLib import LcdDisplay, ScrollingLinesLcd
 
 lcd = LcdDisplay()
 
@@ -248,7 +248,7 @@ An 8x8 matrix with 64 colored LEDs (NeoPixel).
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.LedMatrix import LedMatrix
+from JoyPiNoteBetterLib import LedMatrix
 
 matrix = LedMatrix()
 ```
@@ -258,7 +258,7 @@ matrix = LedMatrix()
 | Method                           | Description                 |
 | -------------------------------- | --------------------------- |
 | `clear()`                        | Turns off all LEDs          |
-| `fill(color)`                    | Fills all LEDs with a color |
+| `setAll(color)`                  | Fills all LEDs with a color |
 | `setPixel(x, y, color)`          | Sets a single pixel         |
 | `setBrightness(value)`           | Change brightness (0-255)   |
 | `showChar(char, color)`          | Shows a character           |
@@ -298,7 +298,7 @@ A sensor that measures the ambient brightness (in Lux).
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.LightSensor import LightSensor
+from JoyPiNoteBetterLib import LightSensor
 
 sensor = LightSensor()
 ```
@@ -330,7 +330,7 @@ A reader for NFC tags and RFID cards.
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.Nfc import NfcReader
+from JoyPiNoteBetterLib import NfcReader
 
 nfc = NfcReader()
 ```
@@ -365,7 +365,7 @@ An electrical switch for turning devices on/off.
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.Relay import Relay
+from JoyPiNoteBetterLib import Relay
 
 relay = Relay()
 ```
@@ -394,7 +394,7 @@ A 4-digit 7-segment display for numbers and simple characters.
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.Seg7x4 import Seg7x4
+from JoyPiNoteBetterLib import Seg7x4
 
 display = Seg7x4()
 ```
@@ -436,7 +436,7 @@ A motor that can rotate to a specific angle (0-180°).
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.Servomotor import Servomotor
+from JoyPiNoteBetterLib import Servomotor
 
 servo = Servomotor()
 ```
@@ -469,7 +469,7 @@ A sensor that detects when a sound is made.
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.SoundSensor import SoundSensor
+from JoyPiNoteBetterLib import SoundSensor
 
 sensor = SoundSensor()
 ```
@@ -498,7 +498,7 @@ A motor that can rotate precisely in small steps.
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.Stepmotor import Stepmotor
+from JoyPiNoteBetterLib import Stepmotor
 
 motor = Stepmotor()
 ```
@@ -530,7 +530,7 @@ A sensor that detects if the board is tilted.
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.TiltSensor import TiltSensor
+from JoyPiNoteBetterLib import TiltSensor
 
 sensor = TiltSensor()
 ```
@@ -561,7 +561,7 @@ A sensor that detects touch.
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.TouchSensor import TouchSensor
+from JoyPiNoteBetterLib import TouchSensor
 
 sensor = TouchSensor()
 ```
@@ -596,7 +596,7 @@ A sensor that measures distance to objects (like a parking sensor).
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.Ultrasonic import UltrasonicSensor
+from JoyPiNoteBetterLib import UltrasonicSensor
 
 sensor = UltrasonicSensor()
 ```
@@ -632,7 +632,7 @@ A small motor that produces vibrations (like in a phone).
 
 ### Import & Initialization
 ```python
-from JoyPiNoteBetterLib.Modules.Vibrator import Vibrator, PwmVibrator
+from JoyPiNoteBetterLib import Vibrator, PwmVibrator
 
 # Simple vibrator (on/off only)
 vibrator = Vibrator()

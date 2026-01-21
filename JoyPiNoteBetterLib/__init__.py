@@ -56,5 +56,5 @@ __all__ = [
     "ScrollingLinesLcd",
 ]
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __package_name__ = "JoyPiNoteBetterLib"
