@@ -37,10 +37,11 @@ matrix = ButtonMatrix()
 
 ### Available Methods
 
-| Method            | Description                          | Returns                |
-| ----------------- | ------------------------------------ | ---------------------- |
-| `getPressedKey()` | Returns the currently pressed button | `int` (0-15) or `None` |
-| `getAdcValue()`   | Reads the raw ADC value              | `int` (0-1023)         |
+| Method                 | Description                          | Returns                |
+| ---------------------- | ------------------------------------ | ---------------------- |
+| `getPressedKey()`      | Returns the currently pressed button | `int` (0-15) or `None` |
+| `getAdcValue()`        | Reads the raw ADC value              | `int` (0-1023)         |
+| `readChannel(channel)` | Reads raw ADC from specific channel  | `int` (0-1023)         |
 
 ### Example
 ```python
@@ -145,13 +146,12 @@ joystick = Joystick()
 
 ### Available Methods
 
-| Method                         | Description                   | Returns                     |
-| ------------------------------ | ----------------------------- | --------------------------- |
-| `getX()`                       | X-axis position (left/right)  | `int` (0-1023, center ~512) |
-| `getY()`                       | Y-axis position (up/down)     | `int` (0-1023, center ~512) |
-| `getXY()`                      | Both values as tuple          | `(x, y)`                    |
-| `getDirection(threshold=200)`  | Direction as enum             | `Direction`                 |
-| `getDirection8(threshold=200)` | 8 directions (incl. diagonal) | `Direction`                 |
+| Method                                   | Description                  | Returns                     |
+| ---------------------------------------- | ---------------------------- | --------------------------- |
+| `getX()`                                 | X-axis position (left/right) | `int` (0-1023, center ~512) |
+| `getY()`                                 | Y-axis position (up/down)    | `int` (0-1023, center ~512) |
+| `getXY()`                                | Both values as tuple         | `(x, y)`                    |
+| `getDirection(do8Directions, threshold)` | Direction as enum            | `Direction`                 |
 
 ### Directions (Direction Enum)
 - `Direction.CENTER` - Center
@@ -159,7 +159,7 @@ joystick = Joystick()
 - `Direction.S` - Down (South)
 - `Direction.E` - Right (East)
 - `Direction.W` - Left (West)
-- `Direction.NE, SE, SW, NW` - Diagonals (only with `getDirection8`)
+- `Direction.NE, SE, SW, NW` - Diagonals (only with `do8Directions=True`)
 
 ### Example
 ```python
@@ -199,22 +199,26 @@ scroller = ScrollingLinesLcd(lcdDisplay=lcd)
 ### Available Methods
 
 **LcdDisplay:**
-| Method                         | Description                |
-| ------------------------------ | -------------------------- |
-| `clear()`                      | Clears the entire screen   |
-| `displayMessage(text, line=0)` | Shows text on a line       |
-| `setBacklight(True/False)`     | Backlight on/off           |
-| `setCursor(True/False)`        | Show/hide cursor           |
-| `setBlink(True/False)`         | Cursor blinking on/off     |
-| `setCursorPosition(col, row)`  | Set cursor position        |
-| `showBigText(text, delay=0.3)` | Long text with auto-scroll |
+| Method                                 | Description                         |
+| -------------------------------------- | ----------------------------------- |
+| `clear()`                              | Clears the entire screen            |
+| `displayMessage(text, line=0)`         | Shows text on a line                |
+| `setBacklight(True/False)`             | Backlight on/off                    |
+| `setDisplay(True/False)`               | Display on/off                      |
+| `setCursor(True/False)`                | Show/hide cursor                    |
+| `setBlink(True/False)`                 | Cursor blinking on/off              |
+| `setCursorPosition(col, row)`          | Set cursor position                 |
+| `setColumnAlign(True/False)`           | Column alignment on/off             |
+| `setDirection(True/False)`             | Text direction (RTL/LTR)            |
+| `showBigText(text, delay=0.3)`         | Long text with auto-scroll          |
+| `showFileContent(filePath, delay=0.3)` | Display file content with scrolling |
 
 **ScrollingLinesLcd:**
 | Method                             | Description                                 |
 | ---------------------------------- | ------------------------------------------- |
 | `show(messages, line, delay=None)` | Set messages for a line and start scrolling |
 | `start()`                          | Start the scrolling animation               |
-| `stop(clearMessages=True)`         | Stop the scrolling animation                |
+| `stop(True)`                       | Stop the scrolling animation                |
 
 ### Example
 ```python
@@ -255,15 +259,16 @@ matrix = LedMatrix()
 
 ### Available Methods
 
-| Method                           | Description                 |
-| -------------------------------- | --------------------------- |
-| `clear()`                        | Turns off all LEDs          |
-| `setAll(color)`                  | Fills all LEDs with a color |
-| `setPixel(x, y, color)`          | Sets a single pixel         |
-| `setBrightness(value)`           | Change brightness (0-255)   |
-| `showChar(char, color)`          | Shows a character           |
-| `scrollText(text, color, delay)` | Scroll text across display  |
-| `update()`                       | Apply changes to matrix     |
+| Method                                              | Description                    |
+| --------------------------------------------------- | ------------------------------ |
+| `clear()`                                           | Turns off all LEDs             |
+| `setAll(color)`                                     | Fills all LEDs with a color    |
+| `setPixel(position, color)`                         | Sets a single pixel (0-63)     |
+| `setBrightness(brightness)`                         | Change brightness (0-255)      |
+| `showChar(char, color, offsetX, background)`        | Shows a character              |
+| `showText(text, color, background)`                 | Shows text (first char on 8x8) |
+| `scrollText(text, color, delay, loops, background)` | Scroll text across display     |
+| `update()`                                          | Apply changes to matrix        |
 
 ### Colors
 Colors are specified as RGB tuples: `(Red, Green, Blue)` with values 0-255.
@@ -280,11 +285,17 @@ WHITE = (255, 255, 255)
 matrix = LedMatrix(brightness=20)
 
 # Set individual pixels
-matrix.setPixel(0, 0, (255, 0, 0))  # Red pixel top-left
+matrix.setPixel(0, (255, 0, 0))  # Red pixel at position 0
 matrix.update()
+
+# Show single character
+matrix.showChar("A", (0, 255, 0))
 
 # Scroll text
 matrix.scrollText("Hello", (0, 255, 0), delay=0.1)
+
+# Scroll text with loops and background color
+matrix.scrollText("Hi", (255, 0, 0), delay=0.1, loops=2, background=(0, 0, 50))
 
 # Turn everything off
 matrix.clear()
@@ -294,7 +305,7 @@ matrix.clear()
 
 ## 7. Light Sensor
 
-A sensor that measures the ambient brightness (in Lux).
+A sensor that measures the ambient brightness (in Lux) via I2C.
 
 ### Import & Initialization
 ```python
@@ -305,9 +316,10 @@ sensor = LightSensor()
 
 ### Available Methods
 
-| Method        | Description                 | Returns          |
-| ------------- | --------------------------- | ---------------- |
-| `readLight()` | Measures current brightness | `float` (in Lux) |
+| Method                  | Description                     | Returns          |
+| ----------------------- | ------------------------------- | ---------------- |
+| `readLight()`           | Measures current brightness     | `float` (in Lux) |
+| `convertToNumber(data)` | Converts raw sensor data to lux | `float` (in Lux) |
 
 ### Example
 ```python
@@ -408,7 +420,8 @@ display = Seg7x4()
 | `showColon()`               | Shows the colon              |
 | `clear()`                   | Clears the display           |
 | `setBrightness(0.0-1.0)`    | Set brightness               |
-| `update()`                  | Apply changes                |
+| `setBlinkRate(0-3)`         | Set blink rate               |
+| `update()`                  | Apply changes to display     |
 
 ### Example
 ```python
@@ -426,6 +439,13 @@ display.update()
 # Decimal number
 display.setFull(3.14, decimal=2)
 display.update()
+
+# Set individual digits
+display.set(0, '1')
+display.set(1, '2')
+display.set(2, '3')
+display.set(3, '4')
+display.update()
 ```
 
 ---
@@ -438,7 +458,7 @@ A motor that can rotate to a specific angle (0-180°).
 ```python
 from JoyPiNoteBetterLib import Servomotor
 
-servo = Servomotor()
+servo = Servomotor(90)  # Starting position at 90°
 ```
 
 ### Available Methods
@@ -449,8 +469,9 @@ servo = Servomotor()
 | `getDirection()`             | Returns current angle          |
 
 ### Parameters
+- `startDirection`: Initial angle position (0-180 degrees, required)
 - `angle`: Target angle (0-180 degrees)
-- `speed`: Step size (0 = slow, higher = faster)
+- `speed`: Step size (0 = single step, higher values = faster transitions)
 
 ### Example
 ```python
@@ -458,7 +479,7 @@ servo = Servomotor(90)  # Starts at center position
 
 servo.setDirection(0, 5)    # Rotates to 0° (slowly)
 servo.setDirection(180, 10) # Rotates to 180° (faster)
-servo.setDirection(90, 0)   # Back to center (very slow)
+servo.setDirection(90, 0)   # Back to center (single-step movement)
 ```
 
 ---
@@ -505,12 +526,13 @@ motor = Stepmotor()
 
 ### Available Methods
 
-| Method                     | Description                            |
-| -------------------------- | -------------------------------------- |
-| `setSpeed(1-100)`          | Set speed                              |
-| `turnSteps(steps)`         | Rotate by X steps (negative = reverse) |
-| `turnDegrees(degrees)`     | Rotate by X degrees                    |
-| `turnDistance(cm, radius)` | Rotate for a distance (with wheel)     |
+| Method                           | Description                            |
+| -------------------------------- | -------------------------------------- |
+| `setSpeed(1-100)`                | Set speed                              |
+| `turnSteps(steps)`               | Rotate by X steps (negative = reverse) |
+| `turnDegrees(degrees)`           | Rotate by X degrees                    |
+| `turnDistance(distance, radius)` | Rotate for a distance (with wheel)     |
+| `release()`                      | Release coils (free rotation, no heat) |
 
 ### Example
 ```python
@@ -520,6 +542,7 @@ motor.setSpeed(50)           # Medium speed
 motor.turnDegrees(90)        # 90° clockwise
 motor.turnDegrees(-90)       # 90° counter-clockwise
 motor.turnSteps(512)         # 512 steps forward
+motor.release()              # Release motor coils
 ```
 
 ---
@@ -568,10 +591,10 @@ sensor = TouchSensor()
 
 ### Available Methods
 
-| Method           | Description                           | Returns      |
-| ---------------- | ------------------------------------- | ------------ |
-| `isTouched()`    | Checks if the sensor is being touched | `True/False` |
-| `waitForTouch()` | Waits for a touch                     | - (blocks)   |
+| Method                   | Description                           | Returns      |
+| ------------------------ | ------------------------------------- | ------------ |
+| `isTouched()`            | Checks if the sensor is being touched | `True/False` |
+| `waitForTouch(interval)` | Waits for a touch                     | - (blocks)   |
 
 ### Example
 ```python
@@ -603,9 +626,11 @@ sensor = UltrasonicSensor()
 
 ### Available Methods
 
-| Method          | Description           | Returns                            |
-| --------------- | --------------------- | ---------------------------------- |
-| `getDistance()` | Measures the distance | `float` (in cm) or `-1` on timeout |
+| Method                 | Description                    | Returns                              |
+| ---------------------- | ------------------------------ | ------------------------------------ |
+| `getDistance(timeout)` | Measures the distance          | `float` (in cm) or `-1.0` on timeout |
+| `sendTriggerPulse()`   | Send a trigger pulse to sensor | -                                    |
+| `waitForEcho(timeout)` | Wait for echo signal           | `True/False`                         |
 
 ### Example
 ```python
