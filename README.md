@@ -50,6 +50,8 @@ See [Modules.md](Modules.md) for full documentation.
 > sudo python3 your_script.py
 > ```
 
+For examples how you can use the library, explore the [demo](demo) folder.
+
 ## Reinstallation
 
 If you want to update first, from the repository root run:
