@@ -243,7 +243,10 @@ def controlLoop() -> None:
             handleColorselect()
             handleTouch()
 
-            time.sleep(0.2)
+            for _ in range(2):
+                if threadEvent.is_set():
+                    break
+                time.sleep(0.1)
     except Exception:
         pass
 
@@ -269,7 +272,10 @@ def brightnessLoop() -> None:
 
             seg.setFull(brightness)
 
-            time.sleep(0.75)
+            for _ in range(7):
+                if threadEvent.is_set():
+                    break
+                time.sleep(0.1)
     except Exception:
         pass
 
@@ -289,7 +295,10 @@ def updateLoop() -> None:
 
             cursorBlinkState = not cursorBlinkState
 
-            time.sleep(0.2)
+            for _ in range(2):
+                if threadEvent.is_set():
+                    break
+                time.sleep(0.1)
     except Exception:
         pass
 
