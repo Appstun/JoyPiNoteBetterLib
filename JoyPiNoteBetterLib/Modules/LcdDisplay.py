@@ -258,6 +258,8 @@ class ScrollingLinesLcd:
         se = self.stopEvent
 
         def worker():
+            self.lcdDisplay.setBacklight(True)
+            
             index = {"0": 0, "1": 0}
             while not se.is_set():
                 for i in range(2):
