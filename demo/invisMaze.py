@@ -44,89 +44,19 @@ wallHits = 0
 lcdInfoThread: threading.Thread | None = None
 lcdInfoStopEvent: threading.Event | None = None
 wallDelay = WALL_DISAPPEAR_DELAY
+finishBrightness = 255
 
 
 def generateMaze(
     start: tuple[int, int], end: tuple[int, int]
 ) -> list[list[None | int]]:
-    # 0 = Wall, None = Path
-    # Start with everything FREE - then add walls
     gen: list[list[None | int]] = [
         [None for _ in range(MAZE_WIDTH)] for _ in range(MAZE_HEIGHT)
     ]
 
-    wallDensity = 0.2 + (lvl * 0.10)
-
-    # 1. Teile das Grid in 4 Quadranten und platziere Wände gleichmäßig
-    quadrants = [
-        (0, 0, MAZE_WIDTH // 2, MAZE_HEIGHT // 2),  # oben links
-        (MAZE_WIDTH // 2, 0, MAZE_WIDTH, MAZE_HEIGHT // 2),  # oben rechts
-        (0, MAZE_HEIGHT // 2, MAZE_WIDTH // 2, MAZE_HEIGHT),  # unten links
-        (MAZE_WIDTH // 2, MAZE_HEIGHT // 2, MAZE_WIDTH, MAZE_HEIGHT),  # unten rechts
-    ]
-
-    for qx1, qy1, qx2, qy2 in quadrants:
-        # Mindestens 2-3 Wände pro Quadrant
-        wallsInQuadrant = 0
-        targetWalls = random.randint(2, 4) + lvl
-        attempts = 0
-
-        while wallsInQuadrant < targetWalls and attempts < 30:
-            x = random.randint(qx1, qx2 - 1)
-            y = random.randint(qy1, qy2 - 1)
-
-            if (x, y) != start and (x, y) != end and gen[y][x] is None:
-                gen[y][x] = 0
-                wallsInQuadrant += 1
-            attempts += 1
-
-    # 2. Diagonale Wandlinien (kurz, 2-3 Felder)
-    numDiagonals = 2 + lvl
-    for _ in range(numDiagonals):
-        diagStartX = random.randint(1, MAZE_WIDTH - 2)
-        diagStartY = random.randint(1, MAZE_HEIGHT - 2)
-        diagDir = random.choice([(1, 1), (1, -1), (-1, 1), (-1, -1)])
-        diagLen = random.randint(2, 3)
-
-        for i in range(diagLen):
-            dx = diagStartX + diagDir[0] * i
-            dy = diagStartY + diagDir[1] * i
-            if 0 <= dx < MAZE_WIDTH and 0 <= dy < MAZE_HEIGHT:
-                if (dx, dy) != start and (dx, dy) != end:
-                    gen[dy][dx] = 0
-
-    # 3. Isolierte Einzelwände verteilt über das ganze Feld
-    for y in range(MAZE_HEIGHT):
-        for x in range(MAZE_WIDTH):
-            if (x, y) != start and (x, y) != end and gen[y][x] is None:
-                # Prüfe ob Nachbarn frei sind (für isolierte Wand)
-                neighbors = [
-                    (x + dx, y + dy)
-                    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
-                    if 0 <= x + dx < MAZE_WIDTH and 0 <= y + dy < MAZE_HEIGHT
-                ]
-                wallNeighbors = sum(1 for nx, ny in neighbors if gen[ny][nx] == 0)
-
-                # Isolierte Wände haben höhere Chance
-                if wallNeighbors == 0 and random.random() < wallDensity * 0.4:
-                    gen[y][x] = 0
-
-    # 4. Prüfe jeden 2x2 Bereich - füge Wand hinzu wenn komplett frei
-    for y in range(MAZE_HEIGHT - 1):
-        for x in range(MAZE_WIDTH - 1):
-            block = [(x, y), (x + 1, y), (x, y + 1), (x + 1, y + 1)]
-            allFree = all(gen[py][px] is None for px, py in block)
-            if allFree:
-                # Wähle zufällige Position im 2x2 Block
-                wx, wy = random.choice(block)
-                if (wx, wy) != start and (wx, wy) != end:
-                    gen[wy][wx] = 0
-
-    # Solvability check
     def isSolvable() -> bool:
         visited = set()
         stack = [start]
-
         while stack:
             current = stack.pop()
             if current == end:
@@ -134,31 +64,196 @@ def generateMaze(
             if current in visited:
                 continue
             visited.add(current)
-
-            x, y = current
-            neighbors = [
-                (x + dx, y + dy)
-                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
-                if 0 <= x + dx < MAZE_WIDTH and 0 <= y + dy < MAZE_HEIGHT
-            ]
-            for neighbor in neighbors:
-                nx, ny = neighbor
-                if gen[ny][nx] is None and neighbor not in visited:
-                    stack.append(neighbor)
-
+            cx, cy = current
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nx, ny = cx + dx, cy + dy
+                if 0 <= nx < MAZE_WIDTH and 0 <= ny < MAZE_HEIGHT:
+                    if gen[ny][nx] is None and (nx, ny) not in visited:
+                        stack.append((nx, ny))
         return False
 
-    while not isSolvable():
-        # Entferne zufällige Wände bis lösbar
-        wall_positions = [
-            (x, y)
-            for y in range(MAZE_HEIGHT)
-            for x in range(MAZE_WIDTH)
-            if gen[y][x] == 0
-        ]
-        if wall_positions:
-            wx, wy = random.choice(wall_positions)
-            gen[wy][wx] = None  # Wand entfernen
+    def count_paths() -> int:
+        """Count distinct paths from start to end"""
+        from collections import deque
+
+        queue = deque([(start, [start])])
+        visited_states = {start: 1}
+        paths_found = 0
+        min_length = float("inf")
+
+        while queue:
+            current, path = queue.popleft()
+
+            if len(path) > min_length + 3:
+                continue
+
+            if current == end:
+                if len(path) <= min_length + 3:
+                    paths_found += 1
+                    min_length = min(min_length, len(path))
+                continue
+
+            cx, cy = current
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nx, ny = cx + dx, cy + dy
+                if 0 <= nx < MAZE_WIDTH and 0 <= ny < MAZE_HEIGHT:
+                    if gen[ny][nx] is None and (nx, ny) not in path:
+                        new_path = path + [(nx, ny)]
+                        if (nx, ny) not in visited_states or visited_states[
+                            (nx, ny)
+                        ] < 3:
+                            visited_states[(nx, ny)] = (
+                                visited_states.get((nx, ny), 0) + 1
+                            )
+                            queue.append(((nx, ny), new_path))
+
+        return min(paths_found, 5)
+
+    def count_adjacent_walls(x: int, y: int) -> int:
+        count = 0
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < MAZE_WIDTH and 0 <= ny < MAZE_HEIGHT:
+                if gen[ny][nx] == 0:
+                    count += 1
+        return count
+
+    all_positions = [
+        (x, y)
+        for y in range(MAZE_HEIGHT)
+        for x in range(MAZE_WIDTH)
+        if (x, y) != start and (x, y) != end
+    ]
+
+    target_walls = random.randint(22, 28)
+    walls_placed = 0
+
+    # Komplett zufällige Wandplatzierung - keine Struktur-Regeln
+    random.shuffle(all_positions)
+
+    for x, y in all_positions:
+        if walls_placed >= target_walls:
+            break
+
+        gen[y][x] = 0
+
+        if not isSolvable():
+            gen[y][x] = None
+        else:
+            walls_placed += 1
+
+    # Phase 2: Sackgassen erzeugen - Wände die fast einschließen
+    def count_free_neighbors(x: int, y: int) -> int:
+        count = 0
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < MAZE_WIDTH and 0 <= ny < MAZE_HEIGHT:
+                if gen[ny][nx] is None:
+                    count += 1
+            else:
+                count += 1  # Rand zählt als "frei" für Sackgassen
+        return count
+
+    # Finde Positionen für Sackgassen (Stellen mit nur 1 freien Nachbarn)
+    empty_positions = [(x, y) for x, y in all_positions if gen[y][x] is None]
+    random.shuffle(empty_positions)
+
+    dead_ends_added = 0
+    for x, y in empty_positions:
+        if dead_ends_added >= random.randint(6, 12):
+            break
+        # Platziere Wand wenn es eine Sackgasse erzeugt
+        if count_free_neighbors(x, y) == 2:  # Würde einen Engpass/Sackgasse erzeugen
+            gen[y][x] = 0
+            if not isSolvable():
+                gen[y][x] = None
+            else:
+                dead_ends_added += 1
+
+    # Phase 3: Zufällige Löcher in Wand-Clustern öffnen (verwirrt den Spieler)
+    wall_positions = [(x, y) for x, y in all_positions if gen[y][x] == 0]
+    random.shuffle(wall_positions)
+
+    holes_opened = 0
+    for x, y in wall_positions:
+        if holes_opened >= random.randint(12, 18):
+            break
+        # Öffne Loch nur wenn es von mindestens 2 Wänden umgeben ist
+        wall_neighbors = 0
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < MAZE_WIDTH and 0 <= ny < MAZE_HEIGHT:
+                if gen[ny][nx] == 0:
+                    wall_neighbors += 1
+        if wall_neighbors >= 2:
+            gen[y][x] = None
+            holes_opened += 1
+
+    # Phase 3.5: Lange gerade Pfade unterbrechen
+    def find_straight_path_length(x: int, y: int, dx: int, dy: int) -> int:
+        """Zählt wie viele freie Felder in einer Richtung"""
+        length = 0
+        cx, cy = x, y
+        while True:
+            cx, cy = cx + dx, cy + dy
+            if not (0 <= cx < MAZE_WIDTH and 0 <= cy < MAZE_HEIGHT):
+                break
+            if gen[cy][cx] is not None:
+                break
+            length += 1
+        return length
+
+    empty_positions = [(x, y) for x, y in all_positions if gen[y][x] is None]
+    random.shuffle(empty_positions)
+
+    blockers_added = 0
+    for x, y in empty_positions:
+        if blockers_added >= random.randint(3, 6):
+            break
+        # Prüfe ob Teil eines langen geraden Pfads (3+ in eine Richtung)
+        h_length = find_straight_path_length(x, y, -1, 0) + find_straight_path_length(
+            x, y, 1, 0
+        )
+        v_length = find_straight_path_length(x, y, 0, -1) + find_straight_path_length(
+            x, y, 0, 1
+        )
+
+        if h_length >= 3 or v_length >= 3:
+            gen[y][x] = 0
+            if not isSolvable():
+                gen[y][x] = None
+            else:
+                blockers_added += 1
+
+    # Phase 4: Fülle große freie Flächen
+    def has_large_empty_area(x: int, y: int) -> bool:
+        """Prüft ob um (x,y) herum eine 2x2 oder größere freie Fläche ist"""
+        for dy in range(-1, 1):
+            for dx in range(-1, 1):
+                all_empty = True
+                for cy in range(2):
+                    for cx in range(2):
+                        nx, ny = x + dx + cx, y + dy + cy
+                        if not (0 <= nx < MAZE_WIDTH and 0 <= ny < MAZE_HEIGHT):
+                            all_empty = False
+                            break
+                        if gen[ny][nx] is not None:
+                            all_empty = False
+                            break
+                    if not all_empty:
+                        break
+                if all_empty:
+                    return True
+        return False
+
+    empty_positions = [(x, y) for x, y in all_positions if gen[y][x] is None]
+    random.shuffle(empty_positions)
+
+    for x, y in empty_positions:
+        if has_large_empty_area(x, y):
+            gen[y][x] = 0
+            if not isSolvable():
+                gen[y][x] = None
 
     return gen
 
@@ -173,25 +268,30 @@ def updateWalls():
     led.update()
 
 
-def printMaze():
-    for row in maze:
+def printMaze(points: list[tuple[int, int]] | None = None):
+    for y, row in enumerate(maze):
         print(
             " ".join(
-                "." if cell is None else str(cell // 25)
-                for cell in row  # type: ignore
+                "#"
+                if points and (x, y) in points
+                else ("." if cell is None else str(cell // 25))
+                for x, cell in enumerate(row)  # type: ignore
             )
         )
+
     print()
 
 
 def drawPlayer(oldPos: tuple[int, int] | None, newPos: tuple[int, int], doDim: bool):
     if oldPos is not None:
         led.setPixel(oldPos[0] + (oldPos[1] * 8), (0, 0, 0))
-    
+
     col = PLAYER_COLORS[lvl % len(PLAYER_COLORS)]
     if doDim:
-        led.setPixel( playerPos[0] + (playerPos[1] * 8),(col[0] // 3, col[1] // 3, col[2] // 3))
-    else:  
+        led.setPixel(
+            playerPos[0] + (playerPos[1] * 8), (col[0] // 3, col[1] // 3, col[2] // 3)
+        )
+    else:
         led.setPixel(newPos[0] + (newPos[1] * 8), col)
     led.update()
 
@@ -199,6 +299,7 @@ def drawPlayer(oldPos: tuple[int, int] | None, newPos: tuple[int, int], doDim: b
 def drawField(
     overrideShowMaze: bool | None = None, showPlayer: bool = True, showEnd: bool = True
 ):
+    global finishBrightness
     # draw walls
     if overrideShowMaze is None or overrideShowMaze:
         for y in range(MAZE_HEIGHT):
@@ -213,7 +314,9 @@ def drawField(
                     led.setPixel(x + (y * 8), (0, 0, 0))
 
     if showEnd:
-        led.setPixel(pos["end"][0] + (pos["end"][1] * 8), (0, 0, 255))
+        led.setPixel(
+            pos["end"][0] + (pos["end"][1] * 8), (0, 0, min(abs(finishBrightness), 255))
+        )
 
     if showPlayer:
         drawPlayer(None, playerPos, False)
@@ -265,8 +368,8 @@ def lcdClear():
     lcd.setBacklight(False)
 
 
-def gameLoop():
-    global playerPos, pos, wallHits, playerMoveCount
+def gameLogic():
+    global playerPos, pos, wallHits, playerMoveCount, finishBrightness
 
     def startLcdInfo():
         scrLines.show(["Joystick to move", "Touch to see"], 1, 2)
@@ -324,6 +427,12 @@ def gameLoop():
         elif direction == Direction.E:
             newX += 1
 
+        finishBrightness -= 40
+        if finishBrightness < -255:
+            finishBrightness = 255
+        if finishBrightness < 120 and finishBrightness > 0:
+            finishBrightness = -120
+
         # check if new position is valid
         if 0 <= newX < MAZE_WIDTH and 0 <= newY < MAZE_HEIGHT:
             block = maze[newY][newX]
@@ -331,24 +440,32 @@ def gameLoop():
             # move player when path
             if block is None:
                 playerPos = (newX, newY)
-                if playerPos not in playerPath or playerPos != pos["end"]:
-                    playerPath.append(playerPos)
-                updateWalls()
+
+                if (
+                    playerPos not in playerPath
+                    and playerPos != pos["start"]
+                    and playerPos != pos["end"]
+                ):
+                   playerPath.append(playerPos)
+
                 playerMoveCount += 1
+
+                updateWalls()
             # hit wall & reset player to start
             elif block == 0:
                 maze[newY][newX] = WALL_MAX_BRIGHTNESS
                 playerPos = pos["start"]
                 playerPath.clear()
 
-                vib.vibrate(0.05)
-
                 wallHits += 1
-                seg.setFull(wallHits)
                 playerMoveCount += 1
-            drawField(None, lvl < 3, True)
 
-        time.sleep(0.26)
+                vib.vibrate(0.05)
+                seg.setFull(wallHits)
+
+        drawField(None, lvl < 3, True)
+
+        time.sleep(0.2)
 
     # game end logic
 
@@ -499,11 +616,19 @@ if __name__ == "__main__":
                 while btns.getPressedKey() == 15:
                     time.sleep(0.1)
 
-            time.sleep(0.1)
+            time.sleep(0.05)
         scrLines.stop()
+        stopEvent.set()  # stop animation
+
         # wait for touch release
+        t = 0
         while touch.isTouched():
             time.sleep(0.1)
+            t += 1
+
+            if t == 5:
+                led.clear()
+                lcd.displayMessage("Release touch      \nnow to begin...      ")
 
     try:
         threading.Thread(
@@ -511,11 +636,10 @@ if __name__ == "__main__":
         ).start()  # show animation
         lcd.displayMessage("Invis. Maze Game      ", 0)
         menuWait(True)  # show menu
-        stopEvent.set()  # stop animation
 
         while True:
             prepareGame()  # set game variables & generate new maze
-            gameLoop()  # start game
+            gameLogic()  # start game
             menuWait(False)  # show menu
     except KeyboardInterrupt:
         print(" Exiting...")
