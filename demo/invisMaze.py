@@ -491,6 +491,12 @@ def gameLogic():
 
 
 if __name__ == "__main__":
+    # for i in range(5):
+    #     print(f"Maze #{i + 1}")
+    #     prepareGame()
+    #     printMaze([pos["start"], pos["end"]])
+    # exit(0)
+
     print(
         "Look at the LCD display for instructions!"
         + "\n  - Touch sensor = start game & see maze walls"

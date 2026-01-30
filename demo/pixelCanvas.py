@@ -234,73 +234,55 @@ def setPixel(x: int, y: int, color: RgbaColor) -> None:
 def controlLoop() -> None:
     global controlThread, threadEvent, cursorBlinkState
 
-    try:
-        while True:
+    while not threadEvent.is_set():
+        handleMove()
+        handleColorselect()
+        handleTouch()
+
+        for _ in range(2):
             if threadEvent.is_set():
                 break
-
-            handleMove()
-            handleColorselect()
-            handleTouch()
-
-            for _ in range(2):
-                if threadEvent.is_set():
-                    break
-                time.sleep(0.1)
-    except Exception:
-        pass
+            time.sleep(0.1)
 
 
 def brightnessLoop() -> None:
     global brightnessThread, threadEvent, bgColor, activeColor, isBgColorMode
 
-    try:
-        while True:
+    while not threadEvent.is_set():
+
+        brightness = getBightnessFromUltrasonic()
+        if isBgColorMode:
+            bgColor = (bgColor[0], bgColor[1], bgColor[2], brightness)
+        else:
+            activeColor = (
+                activeColor[0],
+                activeColor[1],
+                activeColor[2],
+                brightness,
+            )
+
+        seg.setFull(brightness)
+
+        for _ in range(7):
             if threadEvent.is_set():
                 break
-
-            brightness = getBightnessFromUltrasonic()
-            if isBgColorMode:
-                bgColor = (bgColor[0], bgColor[1], bgColor[2], brightness)
-            else:
-                activeColor = (
-                    activeColor[0],
-                    activeColor[1],
-                    activeColor[2],
-                    brightness,
-                )
-
-            seg.setFull(brightness)
-
-            for _ in range(7):
-                if threadEvent.is_set():
-                    break
-                time.sleep(0.1)
-    except Exception:
-        pass
-
+            time.sleep(0.1)
 
 def updateLoop() -> None:
     global updateThread, threadEvent, cursorBlinkState
 
-    try:
-        while True:
+    while not threadEvent.is_set():
+        drawCanvas(False)
+        if not isBgColorMode:
+            drawCursor(False)
+        led.update()
+
+        cursorBlinkState = not cursorBlinkState
+
+        for _ in range(2):
             if threadEvent.is_set():
                 break
-
-            drawCanvas(False)
-            if not isBgColorMode:
-                drawCursor(False)
-            led.update()
-
-            cursorBlinkState = not cursorBlinkState
-
-            for _ in range(2):
-                if threadEvent.is_set():
-                    break
-                time.sleep(0.1)
-    except Exception:
-        pass
+            time.sleep(0.1)
 
 
 def exitHandler() -> None:
@@ -360,5 +342,9 @@ try:
     controlThread.start()
     brightnessThread = threading.Thread(target=brightnessLoop)
     brightnessThread.start()
+
+    while True:
+        time.sleep(1)
 except KeyboardInterrupt:
-    print("Exiting...")
+    print(" Exiting...")
+    exitHandler()
